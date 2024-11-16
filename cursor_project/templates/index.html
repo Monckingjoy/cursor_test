@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>工时计算器</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        label, input, button {
+            display: block;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            width: 100%;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: absolute;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>工时计算器</h1>
+    <form method="post" action="/">
+        <label for="start_time">上班时间:</label>
+        <input type="time" id="start_time" name="start_time" required>
+        <br>
+        <label for="end_time">下班时间:</label>
+        <input type="time" id="end_time" name="end_time" required>
+        <br>
+        <button type="submit"><i class="fas fa-calculator"></i> 计算</button>
+    </form>
+
+    {% if work_hours is not none %}
+        <h2>工作时长: {{ work_hours|round(2) }} 小时</h2>
+        <p>{{ message }}</p>
+    {% endif %}
+
+    <footer>
+        <p>版权所有 &copy; 2023 工时计算器</p>
+    </footer>
+</body>
+</html> 
