@@ -1,11 +1,9 @@
 import pymysql
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for
 from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
 
 # 创建 Flask 应用实例
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
 
 # 数据库连接配置
 db_config = {
@@ -30,13 +28,24 @@ def get_db_connection():
 @app.route('/', methods=['GET', 'POST'])
 def calculate_hours():
     if request.method == 'POST':
-        # 获取表单数据
-        start_time = request.form.get('start_time') + ":00"  # 添加秒
-        end_time = request.form.get('end_time') + ":00"  # 添加秒
+        # 获取表单数据，并提供默认值
+        start_time = request.form.get('start_time', '')
+        end_time = request.form.get('end_time', '')
+
+        # 检查时间是否为空
+        if not start_time.strip() or not end_time.strip():
+            return render_template('index.html', work_hours=None, message="请输入有效的时间", history=get_history(), average_hours=calculate_average_hours())
+
+        # 添加秒
+        start_time += ":00"
+        end_time += ":00"
 
         # 解析时间字符串为 datetime 对象
-        start = datetime.strptime(start_time, '%H:%M:%S')
-        end = datetime.strptime(end_time, '%H:%M:%S')
+        try:
+            start = datetime.strptime(start_time, '%H:%M:%S')
+            end = datetime.strptime(end_time, '%H:%M:%S')
+        except ValueError:
+            return render_template('index.html', work_hours=None, message="时间格式不正确", history=get_history(), average_hours=calculate_average_hours())
 
         # 计算工作时长
         work_duration = end - start
@@ -114,46 +123,6 @@ def format_duration(duration):
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{hours}:{minutes:02}:{seconds:02}"
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        user_name = request.form['user_name']
-        user_count = request.form['user_count']
-        password = request.form['password']
-
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM user_info WHERE user_name = %s AND user_count = %s", (user_name, user_count))
-        user = cursor.fetchone()
-
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['user_id']
-            return redirect(url_for('home'))
-        else:
-            return "用户名或密码错误"
-
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        user_name = request.form['user_name']
-        user_count = request.form['user_count']
-        password = generate_password_hash(request.form['password'])
-
-        cursor = db.cursor()
-        cursor.execute("INSERT INTO user_info (user_name, user_count, password) VALUES (%s, %s, %s)", (user_name, user_count, password))
-        db.commit()
-
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
-
-@app.route('/home')
-def home():
-    if 'user_id' in session:
-        return "欢迎回来，用户！"
-    return redirect(url_for('login'))
 
 # 启动 Flask 应用
 if __name__ == '__main__':
